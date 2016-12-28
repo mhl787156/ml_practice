@@ -1,12 +1,12 @@
 import math
 from hopfield_basic import HopfieldBasic
-from hopfield import Hopfield
+from hopfield import Hopfield, StochasticHopfield
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
 IMAGE_SIZE = 50
-images = ['image.jpeg', 'images2.jpeg', 'images2.png'] #'images.png'
+images = ['image.jpeg', 'images2.jpeg', 'images2.png', 'images2.png', 'images2.png', 'images2.png'] #'images.png'
 
 def process_image(image_name):
     print 'Processing', image_name
@@ -30,13 +30,13 @@ def main():
 
     print 'Training Network'
     # Training
-    h = Hopfield(IMAGE_SIZE * IMAGE_SIZE)
+    h = StochasticHopfield(IMAGE_SIZE * IMAGE_SIZE, 2)
     h.train(processed_images)
 
     print 'Testing Network'
     #Test
     output = []
-    for x in range(50):
+    for x in range(2):
         log = h.test_with_random()
 
         vfunc2 = np.vectorize(lambda x: 255 if x == 1 else 0)

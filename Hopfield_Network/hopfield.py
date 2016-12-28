@@ -1,7 +1,7 @@
 import numpy as np
 
 class Hopfield(object):
-    """Basic Hopfield Network"""
+    """Hopfield Network"""
 
     def __init__(self, max_size):
         ''' Creates a multi pattern pattern hopfield network 
@@ -18,30 +18,45 @@ class Hopfield(object):
         self.nodes = np.random.choice([-1, 1], self.size)
 
     def _train_weights(self, training_vectors):
-        ''' trains all the weights using the input vector 
-        
+        ''' trains all the weights using the input vector
+
             training_vectors -- a list of numpy training vectors
         '''
         for v in training_vectors:
             self.weights = np.add(self.weights, np.outer(v, v))
         np.fill_diagonal(self.weights, 0)
         self.weights /= len(training_vectors)
-    
+
     def _update_node(self, i):
         ''' Updates a node i with the weights, may flip the node values
 
             i -- ith node
         '''
-        h_i = np.dot(self.weights[i,], self.nodes)        
-        self.nodes[i] = 1 if h_i > 0 else -1        
+        h_i = self._calulate_h_i(i)
+        self.nodes[i] = self._updating_rule(h_i)
 
-    def _update(self, v, time=50000, interval = 0):
-        ''' Updates the hopfield network 
+    def _calulate_h_i(self, i):
+        ''' Calculates the valuf of h_i
 
-            v -- the initial vector
+            i -- ith node
+        '''
+        return np.dot(self.weights[i,], self.nodes)
+
+    def _updating_rule(self, h_i):
+        ''' Uses specified updating rule
+
+            h_i -- the intermediate hebbian of node id
+            Returns -- the value of the node
+        '''
+        return 1 if h_i > 0 else -1
+
+    def _update(self, vector, time=50000, interval=0):
+        ''' Updates the hopfield network
+
+            vector -- the initial vector
             time -- the number of iterations to run for
         '''
-        self.nodes = v
+        self.nodes = vector
         state = []
         for t in range(time):
             i = np.random.randint(0, self.size - 1)
@@ -49,8 +64,6 @@ class Hopfield(object):
             if interval != 0 and t % interval == 0:
                 state.append(np.array(self.nodes))
         return state
-            
-
 
     def calculate_energy(self):
         ''' Calculates and returns the energy of the network.
@@ -66,10 +79,27 @@ class Hopfield(object):
     def test_with_random(self):
         ''' Tests the network with a random image '''
         test = np.random.choice([-1, 1], self.size)
-        log = self._update(test, time=50000, interval=0)
+        log = self._update(test, time=1000000, interval=0)
         log.append(self.nodes)
         return log
 
 
-    
+class StochasticHopfield(Hopfield):
+    ''' Stochastic Hopfield Network '''
 
+    def __init__(self, max_size, T):
+        ''' Constructor
+
+            T -- pseudo temperature used for updating
+        '''
+        super(StochasticHopfield, self).__init__(max_size)
+        self.psuedo_temp = T
+
+    def _updating_rule(self, h_i):
+        ''' Uses specified updating rule
+
+            h_i -- the intermediate hebbian of node id
+            Returns -- the value of the node
+        '''
+        prob = 1. / (1. + np.exp(-2.*h_i / self.psuedo_temp))
+        return 1 if np.random.uniform() <= prob else -1
